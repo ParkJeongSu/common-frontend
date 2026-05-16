@@ -2,7 +2,7 @@
   <div class="header-container">
     <!-- L1: 최상단 바 -->
     <v-app-bar color="primary" density="comfortable" elevation="0" flat>
-      <v-toolbar-title class="font-weight-bold">MES SYSTEM</v-toolbar-title>
+      <v-toolbar-title class="font-weight-bold">Process Manager</v-toolbar-title>
       <v-tabs
         v-model="menuStore.selectedL1"
         color="white"

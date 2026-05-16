@@ -29,14 +29,14 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
   server: {
     proxy: {
       // '/api' 로 시작하는 요청은 전부 target 으로 프록시해준다.
       '/api': {
-        target: 'http://localhost:8081', // Spring 백엔드 서버 주소
+        target: 'http://localhost:11401', // Spring 백엔드 서버 주소
         changeOrigin: true, // cross origin 허용
       },
     },

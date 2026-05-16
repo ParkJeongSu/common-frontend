@@ -87,6 +87,9 @@ import {
   mdiCalendarCheck, // 추가 필요
   mdiTable, // 추가 필요
   mdiFileExcel, // 추가 필요
+  mdiPlay,
+  mdiStop,
+  mdiRefresh,
 } from '@mdi/js'
 
 // 아이콘 별칭(alias)을 만듭니다.
@@ -181,6 +184,9 @@ const aliases = {
   calendarCheck: mdiCalendarCheck,
   table: mdiTable,
   fileExcel: mdiFileExcel,
+  play: mdiPlay,
+  stop: mdiStop,
+  refresh: mdiRefresh,
 }
 
 // 설정들을 export 합니다.

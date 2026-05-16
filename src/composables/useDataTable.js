@@ -36,8 +36,8 @@ export function useDataTable(fetchApi) {
       const response = await fetchApi(params)
 
       // API 응답 구조에 맞게 데이터 매핑 (예: { data: [], total: 100 })
-      items.value = response.data || []
-      totalItems.value = response.total || 0
+      items.value = response.content || []
+      totalItems.value = response.page.totalElements || 0
     } catch (error) {
       console.error('데이터 조회 중 오류 발생:', error)
       items.value = []

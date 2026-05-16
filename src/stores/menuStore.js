@@ -5,34 +5,37 @@ export const useMenuStore = defineStore('menu', function () {
   // 1. 임시 메뉴 데이터 (L1 -> L2 -> L3)
   const menuTree = ref([
     {
-      id: 'PROD',
-      title: '생산관리',
+      id: 'MANAGER',
+      title: '운영관리',
       children: [
         {
-          id: 'PROD_PLAN',
-          title: '생산계획',
+          id: 'STATUS',
+          title: '상태관리',
           children: [
-            { id: 'MENU_01', title: '일일계획수립', componentName: 'DailyPlanView' },
-            { id: 'MENU_02', title: '주간계획현황', componentName: 'InventoryListView' },
+            { id: 'PROCESS_STATUS', title: '프로세스 상태', componentName: 'ProcessStatusView' },
           ],
         },
         {
-          id: 'PROD_EXEC',
-          title: '생산실적',
+          id: 'DEFINITION',
+          title: '기준정보',
           children: [
-            { id: 'MENU_03', title: '공정별실적등록', componentName: 'ProcessResultView' },
+            { id: 'PURGE_DEF', title: 'Purge 설정', componentName: 'PurgeConfigView' },
+            { id: 'PROCESS_INFO', title: '프로세스 정보', componentName: 'ProcessInfoView' },
           ],
         },
       ],
     },
     {
-      id: 'QUAL',
-      title: '품질관리',
+      id: 'HISTORY',
+      title: '이력조회',
       children: [
         {
-          id: 'QUAL_INSP',
-          title: '검사관리',
-          children: [{ id: 'MENU_04', title: '수입검사등록', componentName: 'IncomingInspView' }],
+          id: 'HIST_SUB',
+          title: '이력관리',
+          children: [
+            { id: 'PURGE_LOG', title: 'Purge 로그', componentName: 'PurgeLogView' },
+            { id: 'PROC_HIST', title: '프로세스 이력', componentName: 'ProcessStatusHistoryView' },
+          ],
         },
       ],
     },
