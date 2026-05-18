@@ -13,26 +13,20 @@ export function fetchProcessInfoApi(params) {
  * @param {string} mode - 'add' (신규) 또는 'edit' (수정)
  * @param {object} formData - 전송할 데이터
  */
-export function controlProcessApi(portId, mode, formData) {
-  if (mode === 'start') {
-    // 신규 등록: POST 요청
-    return api.post('/process/' + portId + '/' + mode, formData)
-  } else if (mode === 'stop') {
-    // 기존 수정: PUT 요청 (id값은 formData 내부에 있다고 가정)
-    return api.post('/process/' + portId + '/' + mode, formData)
-  }
+export function saveProcessInfoApi(mode, formData) {
+  return api.post('/process-info', formData)
 }
 
 /**
  * 단일 재고 삭제
  */
-export function deleteProcessInfoApi(id) {
-  return api.delete('/inventory/' + id)
+export function deleteProcessInfoApi(ports) {
+  return api.delete('/process-info', { data: ports })
 }
 
 /**
  * 다중 재고 삭제 (배치 처리)
  */
-export function deleteBulkInventoryApi(ids) {
-  return api.post('/inventory/delete-bulk', { ids: ids })
+export function deleteBulkInventoryApi(ports) {
+  return api.post('/process-info', { data: ports })
 }

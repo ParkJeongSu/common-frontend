@@ -1,7 +1,7 @@
 <template>
   <div class="form-container d-flex flex-column fill-height">
     <v-form class="flex-grow-1 overflow-y-auto pa-4">
-      <v-row dense>
+      <v-row density="comfortable">
         <v-col cols="6">
           <v-text-field
             v-model="formData.id"

@@ -8,6 +8,8 @@
     :items-length="totalItems"
     :loading="loading"
     :density="density"
+    :item-value="itemValue"
+    return-object
     show-select
     class="base-data-table"
     v-on:update:options="onUpdateOptions"
@@ -45,6 +47,8 @@ const props = defineProps({
       return []
     },
   }, // 외부 v-model 연동
+  // [추가] 테이블마다 고유한 PK 속성명을 받기 위한 프롭 (기본값은 id)
+  itemValue: { type: String, default: 'id' },
 })
 
 // 2. Emits 정의

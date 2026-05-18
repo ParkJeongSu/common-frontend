@@ -1,7 +1,7 @@
 <template>
   <div class="form-container d-flex flex-column fill-height">
     <v-form class="flex-grow-1 overflow-y-auto pa-4">
-      <v-row dense>
+      <v-row density="comfortable">
         <v-col cols="6">
           <v-text-field
             v-model="formData.id"
@@ -102,6 +102,10 @@ watch(
 async function onHandleSave() {
   await submitForm(panelStore.mode, formData, function () {
     alert('반영 완료')
+    // [핵심] 부모 뷰가 등록해 둔 onSuccess 콜백 함수가 있다면 실행하여 리스트를 새로고침
+    if (typeof panelStore.onSuccess === 'function') {
+      panelStore.onSuccess()
+    }
     panelStore.closePanel()
   })
 }

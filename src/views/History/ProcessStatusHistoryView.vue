@@ -1,128 +1,165 @@
 <template>
-  <DataTableWidget title="실시간 자재 재고 현황">
-    <!-- [슬롯 1] 규격화된 검색 패널 사용 -->
+  <DataTableWidget title="프로세스 상태 변경 이력 조회">
+    <!-- [슬롯 1] 검색 패널 (날짜 컴포넌트 추가) -->
     <template v-slot:search>
       <SearchPanel v-on:search="onSearch">
-        <!-- 화면별로 다른 입력 항목만 여기에 작성 -->
+        <!-- 시작일 선택 -->
+        <v-col cols="12" md="2">
+          <v-text-field
+            v-model="uiParams.fromDate"
+            label="조회 시작일"
+            type="date"
+            density="compact"
+          ></v-text-field>
+        </v-col>
+        <!-- 종료일 선택 -->
+        <v-col cols="12" md="2">
+          <v-text-field
+            v-model="uiParams.toDate"
+            label="조회 종료일"
+            type="date"
+            density="compact"
+          ></v-text-field>
+        </v-col>
         <v-col cols="12" md="3">
-          <v-text-field v-model="searchParams.itemCode" label="품목코드"></v-text-field>
+          <v-text-field
+            v-model="uiParams.processName"
+            label="프로세스명"
+            density="compact"
+          ></v-text-field>
+        </v-col>
+        <v-col cols="12" md="2">
+          <v-text-field
+            v-model="uiParams.port"
+            label="PORT"
+            type="number"
+            density="compact"
+          ></v-text-field>
         </v-col>
         <v-col cols="12" md="3">
           <v-select
-            v-model="searchParams.whType"
-            :items="['전체', '창고A', '창고B']"
-            label="창고유형"
+            v-model="uiParams.status"
+            :items="['전체', 'RUNNING', 'DOWN', 'STARTING', 'STOPPING']"
+            label="상태"
+            density="compact"
           ></v-select>
         </v-col>
       </SearchPanel>
     </template>
 
-    <!-- [슬롯 2] 버튼 액션 -->
+    <!-- [슬롯 2] 상단 액션 버튼 -->
     <template v-slot:actions>
-      <v-btn color="primary" prepend-icon="$plus" v-on:click="onAdd">신규 추가</v-btn>
-      <v-btn color="error" prepend-icon="$delete" v-on:click="onOpenDelete">삭제</v-btn>
+      <v-btn color="primary" prepend-icon="$refresh" v-on:click="onSearch">새로고침</v-btn>
       <v-divider vertical class="mx-2"></v-divider>
       <v-btn color="success" prepend-icon="$fileExcel">엑셀 출력</v-btn>
     </template>
 
-    <!-- [슬롯 3] 실제 테이블 -->
+    <!-- [슬롯 3] 이력 데이터 테이블 -->
     <template v-slot:table>
       <BaseDataTable
-        :headers="inventoryHeaders"
+        :headers="historyHeaders"
         :items="items"
         :total-items="totalItems"
         :loading="loading"
-        v-on:click:row="onRowClick"
         v-on:update:options="onUpdateOptions"
-      />
+      >
+        <template v-slot:[`item.status`]="{ item }">
+          <v-chip :color="getStatusColor(item.status)" size="small" variant="flat">
+            {{ item.status }}
+          </v-chip>
+        </template>
+
+        <template v-slot:[`item.eventTime`]="{ item }">
+          {{ formatDateTime(item.eventTime) }}
+        </template>
+        <template v-slot:[`item.startRequestTime`]="{ item }">
+          {{ formatDateTime(item.startRequestTime) }}
+        </template>
+        <template v-slot:[`item.startTime`]="{ item }">
+          {{ formatDateTime(item.startTime) }}
+        </template>
+        <template v-slot:[`item.endRequestTime`]="{ item }">
+          {{ formatDateTime(item.endRequestTime) }}
+        </template>
+        <template v-slot:[`item.endTime`]="{ item }">
+          {{ formatDateTime(item.endTime) }}
+        </template>
+      </BaseDataTable>
     </template>
   </DataTableWidget>
-  <!-- 공통 삭제 확인 팝업 -->
-  <ConfirmDialog
-    v-model="deleteDialog"
-    :message="selectedRows.length + '개의 항목을 삭제하시겠습니까?'"
-    v-on:confirm="onDeleteConfirm"
-  />
 </template>
 
 <script setup>
-import { ref, reactive, markRaw } from 'vue'
+import { reactive } from 'vue'
 import DataTableWidget from '@/components/widgets/DataTableWidget.vue'
-import { usePanelStore } from '@/stores/panelStore'
+import SearchPanel from '@/components/widgets/SearchPanel.vue'
 import BaseDataTable from '@/components/common/BaseDataTable.vue'
-import InventoryForm from '@/views/Production/components/InventoryForm.vue' // 별도로 만든 폼
 import { useDataTable } from '@/composables/useDataTable'
-import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
-//import { fetchInventoryApi } from '@/api/inventory' // API 함수 주입
+import { fetchProcessHistoryApi } from '@/api/processStatusHistory'
+import { formatDateTime } from '@/utils/dateUtils'
 
-const panelStore = usePanelStore()
-const selectedRows = ref([])
-const deleteDialog = ref(false)
+// 화면 UI와 다이렉트로 바인딩될 reactive 객체
+const uiParams = reactive({
+  fromDate: '',
+  toDate: '',
+  processName: '',
+  port: null,
+  status: '전체',
+})
 
-// [기능 1] 추가 버튼 클릭
-function onAdd() {
-  // 신규 등록 시에는 패널을 강제로 열어주는 것이 UX상 좋으므로 기존 방식 유지 가능
-  panelStore.setSelectedItem(null, markRaw(InventoryForm), '신규 재고 등록', 'add')
-  if (!panelStore.isOpen) panelStore.togglePanel()
-}
-
-// [기능 2] 삭제 버튼 클릭 (팝업 열기)
-function onOpenDelete() {
-  if (selectedRows.value.length === 0) return alert('삭제할 항목을 선택해주세요.')
-  deleteDialog.value = true
-}
-
-// [기능 3] 실제 삭제 처리
-function onDeleteConfirm() {
-  console.log('삭제 처리 대상:', selectedRows.value)
-  // API 호출 로직 추가 예정
-  selectedRows.value = []
-}
-
-// [기능 4] 로우 클릭 시 (수정 모드로 패널 열기)
-function onRowClick(event, row) {
-  // 패널의 열림 상태를 건드리지 않고 데이터만 전송
-  panelStore.setSelectedItem(
-    row.item,
-    markRaw(InventoryForm),
-    '재고 상세 정보',
-    'view', // 클릭 시에는 기본적으로 조회 모드
-  )
-}
-
-// 가짜 API 함수 정의 (명시적 함수 사용)
-async function fetchInventoryMock(params) {
-  // 실제 네트워크 통신처럼 0.5초 대기
-  await new Promise(function (resolve) {
-    setTimeout(resolve, 500)
-  })
-
-  return {
-    total: 2,
-    data: [
-      { id: 1, whName: '자재1창고', itemCode: 'ITEM-001', qty: 500 },
-      { id: 2, whName: '제품A창고', itemCode: 'ITEM-002', qty: 1200 },
-    ],
-  }
-}
-
-// 1. 검색 파라미터 및 헤더 설정
-const searchParams = reactive({ itemCode: '' })
-const inventoryHeaders = [
-  { title: '창고', key: 'whName' },
-  { title: '품목코드', key: 'itemCode' },
-  { title: '현재고', key: 'qty', align: 'end' },
+const historyHeaders = [
+  { title: '이벤트 시간', key: 'eventTime', sortable: true, width: '160px' },
+  { title: 'PORT', key: 'port', width: '90px' },
+  { title: '프로세스명', key: 'processName' },
+  { title: '상태', key: 'status', align: 'center', width: '110px' },
+  { title: 'PID', key: 'pid', width: '90px' },
+  { title: '시작요청시간', key: 'startRequestTime', width: '160px' },
+  { title: '시작시간', key: 'startTime', width: '160px' },
+  { title: '종료요청시간', key: 'endRequestTime', width: '160px' },
+  { title: '종료시간', key: 'endTime', width: '160px' },
 ]
 
-// 2. 엔진(Composable) 가동
-const { items, totalItems, loading, loadData, updateOptions } = useDataTable(fetchInventoryMock)
+const { items, totalItems, loading, loadData, updateOptions } = useDataTable(fetchProcessHistoryApi)
 
-// 3. 핸들러 정의 (함수 사용)
+// 백엔드 Vo 스키마 명세에 맞추어 파라미터를 정제하는 함수
+function getFormattedParams() {
+  const params = {
+    processName: uiParams.processName,
+    port: uiParams.port,
+    status: uiParams.status,
+    fromEventTime: null,
+    toEventTime: null,
+  }
+
+  // 시작일 처리 (시작 지점인 00:00:00 시각 추가)
+  if (uiParams.fromDate) {
+    params.fromEventTime = uiParams.fromDate + 'T00:00:00'
+  }
+  // 종료일 처리 (끝 지점인 23:59:59 시각 추가)
+  if (uiParams.toDate) {
+    params.toEventTime = uiParams.toDate + 'T23:59:59'
+  }
+
+  return params
+}
+
 function onSearch() {
-  loadData(searchParams)
+  const finalParams = getFormattedParams()
+  loadData(finalParams)
 }
 
 function onUpdateOptions(options) {
-  updateOptions(options, searchParams)
+  const finalParams = getFormattedParams()
+  updateOptions(options, finalParams)
+}
+
+function getStatusColor(status) {
+  if (!status) return 'grey'
+  const s = status.toUpperCase()
+  if (s === 'RUNNING') return 'success'
+  if (s === 'DOWN') return 'error'
+  if (s === 'STARTING') return 'info'
+  if (s === 'STOPPING') return 'warning'
+  return 'grey'
 }
 </script>

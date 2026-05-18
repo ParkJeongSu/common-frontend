@@ -32,6 +32,7 @@
         :items="items"
         :total-items="totalItems"
         :loading="loading"
+        item-value="id"
         v-on:click:row="onRowClick"
         v-on:update:options="onUpdateOptions"
       >
@@ -89,11 +90,15 @@ function onUpdateOptions(options) {
 
 function onAdd() {
   panelStore.setSelectedItem(null, markRaw(PurgeConfigForm), '신규 Purge 정책 등록', 'add')
+  // [핵심] 성공 시 실행할 조회 함수를 스토어에 바인딩
+  panelStore.onSuccess = onSearch
   panelStore.togglePanel()
 }
 
 function onRowClick(event, row) {
   panelStore.setSelectedItem(row.item, markRaw(PurgeConfigForm), 'Purge 정책 수정', 'edit')
+  // [핵심] 성공 시 실행할 조회 함수를 스토어에 바인딩
+  panelStore.onSuccess = onSearch
   panelStore.togglePanel()
 }
 
@@ -103,8 +108,25 @@ function onOpenDelete() {
 }
 
 async function onDeleteConfirm() {
-  await deletePurgeConfigApi(selectedRows.value)
-  alert('삭제 완료')
-  onSearch()
+  // 1. 백엔드 DTO 규격에 맞게 정수형 ID(port) 목록을 추출 (람다 없이 일반 루프 사용)
+  const idList = []
+  for (let i = 0; i < selectedRows.value.length; i++) {
+    idList.push(selectedRows.value[i].id) // ProcessInfo는 port가 PK
+  }
+
+  // 2. 백엔드 DTO의 필드명인 'ids'와 매핑하는 객체 생성
+  const payload = {
+    ids: idList,
+  }
+  try {
+    // 3. 정제된 페이로드 전달
+    await deletePurgeConfigApi(payload)
+    alert('삭제 완료')
+    onSearch()
+  } catch (error) {
+    alert('삭제 처리 중 오류가 발생했습니다.')
+  } finally {
+    selectedRows.value = []
+  }
 }
 </script>

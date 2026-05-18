@@ -12,7 +12,7 @@ export function useDataTable(fetchApi) {
 
   // 페이징 및 정렬 옵션 (Vuetify v-data-table-server 규격)
   const options = reactive({
-    page: 1,
+    page: 0,
     itemsPerPage: 10,
     sortBy: [],
   })
@@ -27,7 +27,7 @@ export function useDataTable(fetchApi) {
       // API 호출 시 페이징 정보와 검색 조건을 함께 전달
       const params = {
         page: options.page,
-        limit: options.itemsPerPage,
+        size: options.itemsPerPage,
         sortBy: options.sortBy.length > 0 ? options.sortBy[0].key : null,
         sortOrder: options.sortBy.length > 0 ? options.sortBy[0].order : null,
         ...searchParams,
